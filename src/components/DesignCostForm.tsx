@@ -1,10 +1,11 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
+import { Star } from 'lucide-react';
 
-type FormData = {
+interface FormData {
   propertyType: string;
   extensionType: string;
-  bedrooms: string | number;
-  startTime: string;
+  bedrooms: string;
+  timeline: string;
   services: string[];
   firstName: string;
   lastName: string;
@@ -12,297 +13,449 @@ type FormData = {
   postcode: string;
   email: string;
   phone: string;
-  heardAboutUs: string;
-  termsAccepted: boolean;
-  updatesSubscribed: boolean;
-  projectAddress: string;
-  projectPostcode: string;
-  hearAboutUs: string;
-  updates: boolean;
+  source: string;
   acceptTerms: boolean;
-};
+  newsletter: boolean;
+  groundFloorType: string;
+}
 
-export default function DesignCostForm() {
+const DesignCostCalculator: React.FC = () => {
+
   const [formData, setFormData] = useState<FormData>({
-    propertyType: "",
-    extensionType: "",
-    bedrooms: 0,
-    startTime: "",
+    propertyType: '',
+    extensionType: '',
+    bedrooms: '',
+    timeline: '',
     services: [],
-    firstName: "",
-    lastName: "",
-    address: "",
-    postcode: "",
-    email: "",
-    phone: "",
-    heardAboutUs: "",
-    termsAccepted: false,
-    updatesSubscribed: false,
-    projectAddress: "",
-    projectPostcode: "",
-    hearAboutUs: "",
-    updates: false,
-    acceptTerms: false
+    firstName: '',
+    lastName: '',
+    address: '',
+    postcode: '',
+    email: '',
+    phone: '',
+    source: '',
+    acceptTerms: false,
+    newsletter: false,
+    groundFloorType:''
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+  const [showGroundFloorOptions, setShowGroundFloorOptions] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-    if (type === "checkbox") {
-      const isChecked = (e.target as HTMLInputElement).checked;
 
-      if (name === "services") {
-        const updatedServices = isChecked
-          ? [...formData.services, value]
-          : formData.services.filter((service) => service !== value);
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-        setFormData({ ...formData, services: updatedServices });
-      } else {
-        setFormData({
-          ...formData,
-          [name]: isChecked,
-        });
+  const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const propertyTypes = [
+    { id: 'detached', label: 'Detached' },
+    { id: 'semi-detached', label: 'Semi Detached' },
+    { id: 'terrace', label: 'Terrace' },
+    { id: 'flat', label: 'Flat' },
+    { id: 'bungalow', label: 'Bungalow' },
+  ];
+
+  const extensionTypes = [
+    { id: 'ground-floor', label: 'Ground Floor' },
+    { id: 'loft', label: 'Loft' },
+    { id: 'first-floor', label: 'First Floor' },
+    { id: 'other', label: 'Other' },
+  ];
+
+  const bedroomOptions = ['1', '2', '3', '4', '5+'];
+  const timelineOptions = ['ASAP', '3 Months', '6 Months', '12 Months +', "I'm not sure"];
+
+  const services = [
+    'Architectural drawings',
+    'Design and planning advice',
+    'Help with financing my build',
+    'Help finding a builder',
+    'Help finding other professionals',
+  ];
+
+  const groundFloorTypes = [
+    { id: 'rear', label: 'Rear' },
+    { id: 'side-infill', label: 'Side Infill' },
+    { id: 'side', label: 'Side' },
+    { id: 'wraparound', label: 'Wraparound' },
+    { id: 'side-and-rear', label: 'Side And Rear' },
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tooltipRef.current && 
+          buttonRef.current && 
+          !tooltipRef.current.contains(event.target as Node) && 
+          !buttonRef.current.contains(event.target as Node)) {
+        setShowGroundFloorOptions(false);
       }
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  const handleSelectGroundFloorType = (type: string) => {
+    setFormData(prev => ({
+      ...prev,
+      extensionType: 'ground-floor',
+      groundFloorType: type
+    }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Form Data:", formData);
+  
+
+  const handleServiceToggle = (service: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter(s => s !== service)
+        : [...prev.services, service]
+    }));
   };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+  };
+
+  const GroundFloorTooltip = () => (
+    <div 
+      ref={tooltipRef}
+      className="absolute bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"
+      style={{
+        top: '100%',
+        left: '0',
+        width: '320px',
+        marginTop: '8px'
+      }}
+    >
+      <div className="space-y-3 grid grid-cols-2 gap-4 ">
+        {groundFloorTypes.map((type) => (
+          <button
+            key={type.id}
+            type="button"
+            onClick={() => handleSelectGroundFloorType(type.id)}
+            className={`w-full p-3 border rounded-lg text-left hover:border-purple-500 transition-colors flex items-center gap-3
+              ${formData.groundFloorType === type.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+          >
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-purple-200 rounded" />
+            </div>
+            <span className="text-sm font-medium">{type.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-purple-100 flex flex-col items-center p-4">
-      <div className="bg-white shadow-lg rounded-xl max-w-4xl w-full p-6">
-        <h1 className="text-2xl font-bold text-center text-purple-700 mb-4">Calculate your design costs</h1>
-        <p className="text-center text-gray-500 mb-8">
-          Get an instant price estimate on architectural drawings and planning support from the highest-rated practice on Trustpilot.
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Property Type */}
-          <div>
-            <p className="text-lg font-medium mb-2">What sort of property is this?</p>
-            <div className="grid grid-cols-3 gap-4">
-              {["Detached", "Semi Detached", "Terrace", "Flat", "Bungalow"].map((type) => (
+    <div className="min-h-screen bg-purple-50 py-8 px-4 ">
+      <div className="mx-auto">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-purple-900 mb-4">
+            Calculate your design costs
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Get an instant price estimate on architectural drawings and planning support from the
+            highest-rated practice on Trustpilot. Don't worry, it's free.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <p className="text-sm text-gray-500 italic">
+              "Resi solves so many pain points for home renovators" — Sheena Amin, ITV
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Excellent</span>
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-green-500 text-green-500" />
+                ))}
+              </div>
+              <span className="text-sm">Trustpilot</span>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
+          <div className="space-y-8">
+            {/* Property Type */}
+            <div>
+              <h2 className="text-2xl font-semibold text-purple-900 mb-4 text-left">
+                What sort of property is this?
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {propertyTypes.map((type) => (
                 <button
+                  key={type.id}
                   type="button"
-                  key={type}
-                  className={`border rounded-lg py-2 px-4 text-center ${
-                    formData.propertyType === type ? "bg-purple-200 border-purple-700" : "bg-gray-100 border-gray-300"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, propertyType: type.id }));
+                  }}
+                  className={`p-4 border rounded-lg text-center hover:border-purple-500 transition-colors ${
+                    formData.propertyType === type.id ? 'border-purple-500' : 'border-gray-200'
                   }`}
-                  onClick={() => setFormData({ ...formData, propertyType: type })}
                 >
-                  {type}
+                  <div className="w-16 h-16 mx-auto mb-2 bg-purple-100 rounded-lg"></div>
+                  <span className="text-sm font-medium">{type.label}</span>
+                  
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Extension Type */}
-          <div>
-            <p className="text-lg font-medium mb-2">And which bit do you want to extend?</p>
-            <div className="grid grid-cols-3 gap-4">
-              {["Ground Floor", "Loft", "First Floor", "Other"].map((type) => (
-                <button
-                  type="button"
-                  key={type}
-                  className={`border rounded-lg py-2 px-4 text-center ${
-                    formData.extensionType === type ? "bg-purple-200 border-purple-700" : "bg-gray-100 border-gray-300"
-                  }`}
-                  onClick={() => setFormData({ ...formData, extensionType: type })}
-                >
-                  {type}
-                </button>
-              ))}
             </div>
-          </div>
 
-          {/* Bedrooms */}
-          <div>
-            <p className="text-lg font-medium mb-2">How many bedrooms does this property have?</p>
-            <div className="grid grid-cols-5 gap-4">
-              {[1, 2, 3, 4, "5+"].map((count) => (
-                <button
-                  type="button"
-                  key={count}
-                  className={`border rounded-lg py-2 px-4 text-center ${
-                    formData.bedrooms === count ? "bg-purple-200 border-purple-700" : "bg-gray-100 border-gray-300"
-                  }`}
-                  onClick={() => setFormData({ ...formData, bedrooms: count })}
-                >
-                  {count}
-                </button>
-              ))}
+            {/* Extension Type */}
+            <div>
+              <h2 className="text-2xl font-semibold text-purple-900 mb-4">
+                And which bit do you want to extend?
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {extensionTypes.map((type) => (
+                  <div key={type.id} className="relative">
+                    <button
+                      ref={type.id === 'ground-floor' ? buttonRef : undefined}
+                      type="button"
+                      onClick={() => {
+                        if (type.id === 'ground-floor') {
+                          setShowGroundFloorOptions(!showGroundFloorOptions);
+                        } else {
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            extensionType: type.id,
+                            groundFloorType: '' 
+                          }));
+                          setShowGroundFloorOptions(false);
+                        }
+                      }}
+                      className={`w-full p-4 border rounded-lg text-center hover:border-purple-500 transition-colors
+                        ${formData.extensionType === type.id ? 'border-purple-500' : 'border-gray-200'}`}
+                    >
+                      <div className="w-16 h-16 mx-auto mb-2 bg-purple-100 rounded-lg" />
+                      <span className="text-sm font-medium">{type.label}</span>
+                    </button>
+                    {type.id === 'ground-floor' && showGroundFloorOptions && <GroundFloorTooltip />}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Start Time */}
-          <div>
-            <p className="text-lg font-medium mb-2">When are you hoping to start the design process?</p>
-            <div className="grid grid-cols-5 gap-4">
-              {["ASAP", "3 Months", "6 Months", "12 Months +", "I'm not sure"].map((time) => (
-                <button
-                  type="button"
-                  key={time}
-                  className={`border rounded-lg py-2 px-4 text-center ${
-                    formData.startTime === time ? "bg-purple-200 border-purple-700" : "bg-gray-100 border-gray-300"
-                  }`}
-                  onClick={() => setFormData({ ...formData, startTime: time })}
-                >
-                  {time}
-                </button>
-              ))}
+
+            {/* Bedrooms */}
+            <div>
+              <h2 className="text-2xl font-semibold text-purple-900 mb-1 text-left">
+                How many bedrooms does this property have?
+              </h2>
+              <p className="text-sm text-gray-500 mb-4 text-left">
+                This will give us an idea of the property's size
+              </p>
+              <div className="grid grid-cols-5 gap-4">
+                {bedroomOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, bedrooms: option }))}
+                    className={`p-4 border rounded-lg text-center hover:border-purple-500 transition-colors
+                      ${formData.bedrooms === option ? 'border-purple-500' : 'border-gray-200'}`}
+                  >
+                    <span className="text-sm font-medium">{option}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Services */}
-          <div>
-            <p className="text-lg font-medium mb-2">Are you interested in any of these services?</p>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Architectural drawings",
-                "Design and planning advice",
-                "Help with financing my build",
-                "Help finding a builder",
-                "Help finding other professionals",
-              ].map((service) => (
-                <label key={service} className="flex items-center space-x-2">
+            {/* Timeline */}
+            <div>
+              <h2 className="text-2xl font-semibold text-purple-900 mb-4 text-left">
+                When are you hoping to start the design process?
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {timelineOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, timeline: option }))}
+                    className={`p-4 border rounded-lg text-center hover:border-purple-500 transition-colors
+                      ${formData.timeline === option ? 'border-purple-500' : 'border-gray-200'}`}
+                  >
+                    <span className="text-sm font-medium">{option}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Services */}
+            <div>
+              <h2 className="text-2xl font-semibold text-purple-900 mb-4 text-left">
+                Are you interested in any of these services?
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {services.map((service) => (
+                  <label
+                    key={service}
+                    className={`p-4 border rounded-lg hover:border-purple-500 transition-colors cursor-pointer
+                      ${formData.services.includes(service) ? 'border-purple-500' : 'border-gray-200'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={formData.services.includes(service)}
+                      onChange={() => handleServiceToggle(service)}
+                    />
+                    <span className="text-sm font-medium">{service}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Personal Details */}
+            <div>
+              <h2 className="text-2xl font-semibold text-purple-900 mb-4 text-left">
+                A few details from you, please...
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    First name*
+                  </label>
                   <input
-                    type="checkbox"
-                    name="services"
-                    value={service}
-                    checked={formData.services.includes(service)}
-                    onChange={handleChange}
-                    className="form-checkbox text-purple-700"
+                    type="text"
+                    name="firstName"
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
                   />
-                  <span>{service}</span>
-                </label>
-              ))}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Last name*
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    First line of project address*
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project postcode*
+                  </label>
+                  <input
+                    type="text"
+                    name="postcode"
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    value={formData.postcode}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email*
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone*
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* User Details */}
-          <div>
-            <p className="text-lg font-medium mb-2">A few details from you, please...</p>
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                name="firstName"
-                placeholder="First name*"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="border rounded-lg px-4 py-2 w-full"
-                required
-              />
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Last name*"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="border rounded-lg px-4 py-2 w-full"
-                required
-              />
+            {/* Source */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 text-left">
+                Where did you hear about us?
+              </label>
+              <select
+                name="source"
+                className="w-2xl p-3 border border-gray-200 rounded-lg flex"
+                value={formData.source}
+                onChange={handleInputChange}
+              >
+                <option value="">None selected</option>
+                <option value="google">Google</option>
+                <option value="friend">Friend</option>
+                <option value="social">Social Media</option>
+              </select>
             </div>
-          </div>
 
-          <div>
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                name="projectAddress"
-                placeholder="Project address*"
-                value={formData.projectAddress}
-                onChange={handleChange}
-                className="border rounded-lg px-4 py-2 w-full"
-                required
-              />
-              <input
-                type="text"
-                name="projectPostcode"
-                placeholder="Project postcode*"
-                value={formData.projectPostcode}
-                onChange={handleChange}
-                className="border rounded-lg px-4 py-2 w-full"
-                required
-              />
+            {/* Terms and Newsletter */}
+            <div className="space-y-4">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="acceptTerms"
+                  className="mt-1"
+                  checked={formData.acceptTerms}
+                  onChange={handleCheckboxChange}
+                />
+                <span className="text-sm">
+                  I accept the{' '}
+                  <a href="#" className="text-purple-600 underline">
+                    terms and conditions
+                  </a>
+                  *
+                </span>
+              </label>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="newsletter"
+                  className="mt-1"
+                  checked={formData.newsletter}
+                  onChange={handleCheckboxChange}
+                />
+                <span className="text-sm">
+                  Keep me updated on Resi news, events and offers.
+                </span>
+              </label>
             </div>
-          </div>
 
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address*"
-              value={formData.email}
-              onChange={handleChange}
-              className="border rounded-lg px-4 py-2 w-full"
-              required
-            />
-          </div>
-
-          <div>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="Phone number*"
-              value={formData.phone}
-              onChange={handleChange}
-              className="border rounded-lg px-4 py-2 w-full"
-              required
-            />
-          </div>
-
-          <div>
-            <p className="text-lg font-medium mb-2">How did you hear about us?</p>
-            <input
-              type="text"
-              name="hearAboutUs"
-              value={formData.hearAboutUs}
-              onChange={handleChange}
-              className="border rounded-lg px-4 py-2 w-full"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="acceptTerms"
-              checked={formData.acceptTerms}
-              onChange={handleChange}
-              className="form-checkbox text-purple-700"
-              required
-            />
-            <label>I accept the terms and conditions</label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="updates"
-              checked={formData.updates}
-              onChange={handleChange}
-              className="form-checkbox text-purple-700"
-            />
-            <label>I would like to receive updates and promotions</label>
-          </div>
-
-          <div className="mt-6 text-center">
+            {/* Submit Button */}
             <button
               type="submit"
-              className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800"
+              className="w-full md:w-auto px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              Submit
+              Reveal my quick quote →
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};
 
+export default DesignCostCalculator;
