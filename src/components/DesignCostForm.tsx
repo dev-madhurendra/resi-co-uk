@@ -1,5 +1,10 @@
 import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
 import { Star } from 'lucide-react';
+import image1 from '../assets/image1.png'
+import image2 from '../assets/image2.png'
+import image3 from '../assets/image3.png'
+import image4 from '../assets/image4.png'
+import image5 from '../assets/image5.png'
 
 interface FormData {
   propertyType: string;
@@ -55,11 +60,11 @@ const DesignCostCalculator: React.FC = () => {
   };
 
   const propertyTypes = [
-    { id: 'detached', label: 'Detached' },
-    { id: 'semi-detached', label: 'Semi Detached' },
-    { id: 'terrace', label: 'Terrace' },
-    { id: 'flat', label: 'Flat' },
-    { id: 'bungalow', label: 'Bungalow' },
+    { id: 'detached', label: 'Detached', src: image1 },
+    { id: 'semi-detached', label: 'Semi Detached', src: image2 },
+    { id: 'terrace', label: 'Terrace', src: image3 },
+    { id: 'flat', label: 'Flat', src: image4 },
+    { id: 'bungalow', label: 'Bungalow', src: image5 },
   ];
 
   const extensionTypes = [
@@ -84,7 +89,7 @@ const DesignCostCalculator: React.FC = () => {
     { id: 'rear', label: 'Rear' },
     { id: 'side-infill', label: 'Side Infill' },
     { id: 'side', label: 'Side' },
-    { id: 'wraparound', label: 'Wraparound' },
+    { id: 'wraparound', label: 'Wrap' },
     { id: 'side-and-rear', label: 'Side And Rear' },
   ];
 
@@ -202,7 +207,8 @@ const DesignCostCalculator: React.FC = () => {
                     formData.propertyType === type.id ? 'border-purple-500' : 'border-gray-200'
                   }`}
                 >
-                  <div className="w-16 h-16 mx-auto mb-2 bg-purple-100 rounded-lg"></div>
+                  <img src={type.src} alt={type.label} className='w-16 h-16 mx-auto ' />
+                  {/* <div className="w-16 h-16 mx-auto mb-2 bg-purple-100 rounded-lg"></div> */}
                   <span className="text-sm font-medium">{type.label}</span>
                   
                 </button>
