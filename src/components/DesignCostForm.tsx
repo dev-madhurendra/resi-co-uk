@@ -1,36 +1,77 @@
-import React, { useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
+
+type FormData = {
+  propertyType: string;
+  extensionType: string;
+  bedrooms: string | number;
+  startTime: string;
+  services: string[];
+  firstName: string;
+  lastName: string;
+  address: string;
+  postcode: string;
+  email: string;
+  phone: string;
+  heardAboutUs: string;
+  termsAccepted: boolean;
+  updatesSubscribed: boolean;
+  projectAddress: string;
+  projectPostcode: string;
+  hearAboutUs: string;
+  updates: boolean;
+  acceptTerms: boolean;
+};
 
 export default function DesignCostForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     propertyType: "",
     extensionType: "",
-    bedrooms: "",
+    bedrooms: 0,
     startTime: "",
     services: [],
     firstName: "",
     lastName: "",
-    projectAddress: "",
-    projectPostcode: "",
+    address: "",
+    postcode: "",
     email: "",
     phone: "",
+    heardAboutUs: "",
+    termsAccepted: false,
+    updatesSubscribed: false,
+    projectAddress: "",
+    projectPostcode: "",
     hearAboutUs: "",
-    acceptTerms: false,
     updates: false,
+    acceptTerms: false
   });
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === "checkbox" && name === "services") {
-      const updatedServices = checked
-        ? [...formData.services, value]
-        : formData.services.filter((service) => service !== value);
-      setFormData({ ...formData, services: updatedServices });
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+
+    if (type === "checkbox") {
+      const isChecked = (e.target as HTMLInputElement).checked;
+
+      if (name === "services") {
+        const updatedServices = isChecked
+          ? [...formData.services, value]
+          : formData.services.filter((service) => service !== value);
+
+        setFormData({ ...formData, services: updatedServices });
+      } else {
+        setFormData({
+          ...formData,
+          [name]: isChecked,
+        });
+      }
     } else {
-      setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Form Data:", formData);
   };
